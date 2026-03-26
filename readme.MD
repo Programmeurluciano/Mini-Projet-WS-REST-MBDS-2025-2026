@@ -197,7 +197,7 @@ spring.jpa.show-sql=true
 spring.mail.host=smtp.email.com
 spring.mail.port=2525
 spring.mail.username=test@gmail.com
-spring.mail.password=password_eto
+spring.mail.password=password
 
 spring.mail.properties.mail.smtp.auth=true
 spring.mail.properties.mail.smtp.starttls.enable=true
