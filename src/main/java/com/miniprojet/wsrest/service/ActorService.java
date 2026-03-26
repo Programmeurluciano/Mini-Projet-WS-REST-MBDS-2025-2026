@@ -1,5 +1,8 @@
 package com.miniprojet.wsrest.service;
 
+import com.miniprojet.wsrest.dto.ActorMapper;
+import com.miniprojet.wsrest.dto.ActorRequestDTO;
+import com.miniprojet.wsrest.dto.ActorResponseDTO;
 import com.miniprojet.wsrest.model.Actor;
 import com.miniprojet.wsrest.repository.ActorRepository;
 
@@ -18,29 +21,31 @@ public class ActorService {
         this.actorRepository = actorRepository;
     }
 
-    public Page<Actor> getAllActors(Pageable pageable) {
-        return actorRepository.findAll(pageable);
+    public Page<ActorResponseDTO> getAllActors(Pageable pageable) {
+        return actorRepository.findAll(pageable)
+                .map(ActorMapper::toResponse);
     }
 
-    public Optional<Actor> getActorById(Long id) {
-        return actorRepository.findById(id);
+    public Optional<ActorResponseDTO> getActorById(Long id) {
+        return actorRepository.findById(id)
+                .map(ActorMapper::toResponse);
     }
 
-    public Actor createActor(Actor actor) {
-        return actorRepository.save(actor);
+    public ActorResponseDTO createActor(ActorRequestDTO dto) {
+        Actor actor = ActorMapper.toEntity(dto);
+        return ActorMapper.toResponse(actorRepository.save(actor));
+    }
+
+    public ActorResponseDTO updateActor(Long id, ActorRequestDTO dto) {
+        return actorRepository.findById(id)
+                .map(actor -> {
+                    actor.setName(dto.getName());
+                    return ActorMapper.toResponse(actorRepository.save(actor));
+                })
+                .orElseThrow(() -> new RuntimeException("Actor not found with id " + id));
     }
 
     public void deleteActor(Long id) {
         actorRepository.deleteById(id);
     }
-
-    public Actor updateActor(Long id, Actor updatedActor) {
-        return actorRepository.findById(id)
-                .map(actor -> {
-                    actor.setName(updatedActor.getName());
-                    return actorRepository.save(actor);
-                })
-                .orElseThrow(() -> new RuntimeException("Actor not found with id " + id));
-    }
-
 }
