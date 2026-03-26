@@ -23,7 +23,6 @@ public class GlobalExceptionHandler {
         body.put("status", HttpStatus.BAD_REQUEST.value());
         body.put("error", "Validation failed");
 
-        // Récupère tous les messages d'erreur par champ
         Map<String, String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()

@@ -1,5 +1,8 @@
 package com.miniprojet.wsrest.service;
 
+import com.miniprojet.wsrest.dto.CategoryMapper;
+import com.miniprojet.wsrest.dto.CategoryRequestDTO;
+import com.miniprojet.wsrest.dto.CategoryResponseDTO;
 import com.miniprojet.wsrest.model.Category;
 import com.miniprojet.wsrest.repository.CategoryRepository;
 
@@ -18,29 +21,31 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
-    public Page<Category> getAllCategories(Pageable pageable) {
-        return categoryRepository.findAll(pageable);
+    public Page<CategoryResponseDTO> getAllCategories(Pageable pageable) {
+        return categoryRepository.findAll(pageable)
+                .map(CategoryMapper::toResponse);
     }
 
-    public Optional<Category> getCategoryById(Long id) {
-        return categoryRepository.findById(id);
+    public Optional<CategoryResponseDTO> getCategoryById(Long id) {
+        return categoryRepository.findById(id)
+                .map(CategoryMapper::toResponse);
     }
 
-    public Category createCategory(Category category) {
-        return categoryRepository.save(category);
+    public CategoryResponseDTO createCategory(CategoryRequestDTO dto) {
+        Category category = CategoryMapper.toEntity(dto);
+        return CategoryMapper.toResponse(categoryRepository.save(category));
+    }
+
+    public CategoryResponseDTO updateCategory(Long id, CategoryRequestDTO dto) {
+        return categoryRepository.findById(id)
+                .map(category -> {
+                    category.setName(dto.getName());
+                    return CategoryMapper.toResponse(categoryRepository.save(category));
+                })
+                .orElseThrow(() -> new RuntimeException("Category not found with id " + id));
     }
 
     public void deleteCategory(Long id) {
         categoryRepository.deleteById(id);
     }
-
-    public Category updateCategory(Long id, Category updatedCategory) {
-        return categoryRepository.findById(id)
-                .map(category -> {
-                    category.setName(updatedCategory.getName());
-                    return categoryRepository.save(category);
-                })
-                .orElseThrow(() -> new RuntimeException("Category not found with id " + id));
-    }
-
 }
