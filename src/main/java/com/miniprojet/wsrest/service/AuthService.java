@@ -1,16 +1,23 @@
 package com.miniprojet.wsrest.service;
 
-import com.miniprojet.wsrest.dto.*;
-import com.miniprojet.wsrest.model.User;
-import com.miniprojet.wsrest.repository.UserRepository;
-import com.miniprojet.wsrest.model.RefreshToken;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.authentication.*;
+import java.util.Optional;
+
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import jakarta.servlet.http.*;
-import java.util.Optional;
+import com.miniprojet.wsrest.dto.AuthenticationRequest;
+import com.miniprojet.wsrest.dto.AuthenticationResponse;
+import com.miniprojet.wsrest.dto.RegisterRequest;
+import com.miniprojet.wsrest.model.RefreshToken;
+import com.miniprojet.wsrest.model.User;
+import com.miniprojet.wsrest.repository.UserRepository;
+
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +37,7 @@ public class AuthService {
         }
 
         User user = new User();
+        
         user.setFullname(request.getFullname());
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
