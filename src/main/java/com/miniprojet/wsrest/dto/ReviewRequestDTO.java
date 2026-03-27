@@ -10,7 +10,7 @@ import lombok.Setter;
 public class ReviewRequestDTO {
 
     @NotNull(message = "La note est obligatoire")
-    @Min(value = 1, message = "La note minimale est 1")
+    @Min(value = 0, message = "La note minimale est 0")
     @Max(value = 10, message = "La note maximale est 10")
     private Integer rating;
 
