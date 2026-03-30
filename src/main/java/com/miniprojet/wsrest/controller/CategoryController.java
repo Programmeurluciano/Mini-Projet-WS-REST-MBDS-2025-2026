@@ -1,7 +1,10 @@
 package com.miniprojet.wsrest.controller;
 
-import com.miniprojet.wsrest.model.Category;
+import com.miniprojet.wsrest.dto.CategoryRequestDTO;
+import com.miniprojet.wsrest.dto.CategoryResponseDTO;
 import com.miniprojet.wsrest.service.CategoryService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,45 +27,38 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Category>> getAllCategories(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "name") String sort
-    ) {
+    public ResponseEntity<List<CategoryResponseDTO>> getAllCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        
-        Pageable pageable = PageRequest.of(page,size);
-        Page<Category> categories = categoryService.getAllCategories(pageable);
-
+        Pageable pageable = PageRequest.of(page, size);
+        Page<CategoryResponseDTO> categories = categoryService.getAllCategories(pageable);
         return ResponseEntity.ok(categories.getContent());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable Long id) {
-
+    public ResponseEntity<CategoryResponseDTO> getCategoryById(@PathVariable Long id) {
         return categoryService.getCategoryById(id)
-                .map(category -> ResponseEntity.ok(category))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<Category> createCategory(@RequestBody Category category) {
-
-        Category createdCategory = categoryService.createCategory(category);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdCategory);
+    public ResponseEntity<CategoryResponseDTO> createCategory(
+            @Valid @RequestBody CategoryRequestDTO dto) {
+        CategoryResponseDTO created = categoryService.createCategory(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(
+    public ResponseEntity<CategoryResponseDTO> updateCategory(
             @PathVariable Long id,
-            @RequestBody Category category) {
-
+            @Valid @RequestBody CategoryRequestDTO dto) {
         try {
-            Category updatedCategory = categoryService.updateCategory(id, category);
-            return ResponseEntity.ok(updatedCategory);
+            CategoryResponseDTO updated = categoryService.updateCategory(id, dto);
+            return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -71,10 +67,7 @@ public class CategoryController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
-
         categoryService.deleteCategory(id);
-
         return ResponseEntity.noContent().build();
     }
-
 }

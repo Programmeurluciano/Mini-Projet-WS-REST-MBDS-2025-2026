@@ -1,7 +1,10 @@
 package com.miniprojet.wsrest.controller;
 
-import com.miniprojet.wsrest.model.Actor;
+import com.miniprojet.wsrest.dto.ActorRequestDTO;
+import com.miniprojet.wsrest.dto.ActorResponseDTO;
 import com.miniprojet.wsrest.service.ActorService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
@@ -24,44 +27,38 @@ public class ActorController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Actor>> getAllActors(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "title") String sort
-    ) {
+    public ResponseEntity<List<ActorResponseDTO>> getAllActors(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page,size);
-        
-        Page<Actor> actors = actorService.getAllActors(pageable);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<ActorResponseDTO> actors = actorService.getAllActors(pageable);
         return ResponseEntity.ok(actors.getContent());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Actor> getActorById(@PathVariable Long id) {
-
+    public ResponseEntity<ActorResponseDTO> getActorById(@PathVariable Long id) {
         return actorService.getActorById(id)
-                .map(actor -> ResponseEntity.ok(actor))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<Actor> createActor(@RequestBody Actor actor) {
-
-        Actor createdActor = actorService.createActor(actor);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdActor);
+    public ResponseEntity<ActorResponseDTO> createActor(
+            @Valid @RequestBody ActorRequestDTO dto) {
+        ActorResponseDTO created = actorService.createActor(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<Actor> updateActor(
+    public ResponseEntity<ActorResponseDTO> updateActor(
             @PathVariable Long id,
-            @RequestBody Actor actor) {
-
+            @Valid @RequestBody ActorRequestDTO dto) {
         try {
-            Actor updatedActor = actorService.updateActor(id, actor);
-            return ResponseEntity.ok(updatedActor);
+            ActorResponseDTO updated = actorService.updateActor(id, dto);
+            return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
@@ -70,10 +67,7 @@ public class ActorController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteActor(@PathVariable Long id) {
-
         actorService.deleteActor(id);
-
         return ResponseEntity.noContent().build();
     }
-
 }

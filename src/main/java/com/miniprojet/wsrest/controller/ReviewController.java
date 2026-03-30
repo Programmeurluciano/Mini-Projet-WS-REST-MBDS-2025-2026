@@ -1,6 +1,10 @@
 package com.miniprojet.wsrest.controller;
 
-import java.util.List;
+import com.miniprojet.wsrest.dto.ReviewRequestDTO;
+import com.miniprojet.wsrest.dto.ReviewResponseDTO;
+import com.miniprojet.wsrest.service.ReviewService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -8,18 +12,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.*;
 
-import com.miniprojet.wsrest.model.Review;
-import com.miniprojet.wsrest.service.ReviewService;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -32,47 +29,38 @@ public class ReviewController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Review>> getAllReviews(
+    public ResponseEntity<List<ReviewResponseDTO>> getAllReviews(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sort
+            @RequestParam(defaultValue = "10") int size) {
 
-    ) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Review> reviews = reviewService.getAllReviews(pageable);
-
-        return ResponseEntity.ok(reviews.getContent());
+        return ResponseEntity.ok(reviewService.getAllReviews(pageable).getContent());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Review> getReviewById(@PathVariable Long id) {
-
+    public ResponseEntity<ReviewResponseDTO> getReviewById(@PathVariable Long id) {
         return reviewService.getReviewById(id)
-                .map(review -> ResponseEntity.ok(review))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // @AuthenticationPrincipal extrait automatiquement l'user du token JWT
     @PostMapping
-    public ResponseEntity<Review> createReview(@RequestBody Review review) {
+    public ResponseEntity<ReviewResponseDTO> createReview(
+            @Valid @RequestBody ReviewRequestDTO dto,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        Review createdReview = reviewService.createReview(review);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdReview);
+        ReviewResponseDTO created = reviewService.createReview(dto, userDetails.getUsername());
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Review> updateReview(
+    public ResponseEntity<ReviewResponseDTO> updateReview(
             @PathVariable Long id,
-            @RequestBody Review review) {
-
+            @Valid @RequestBody ReviewRequestDTO dto) {
         try {
-
-            Review updatedReview = reviewService.updateReview(id, review);
-
-            return ResponseEntity.ok(updatedReview);
-
+            return ResponseEntity.ok(reviewService.updateReview(id, dto));
         } catch (RuntimeException e) {
-
             return ResponseEntity.notFound().build();
         }
     }
@@ -80,36 +68,27 @@ public class ReviewController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable Long id) {
-
         reviewService.deleteReview(id);
-
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/movie/{movieId}")
-    public ResponseEntity<List<Review>> getReviewsByMovie(
+    public ResponseEntity<List<ReviewResponseDTO>> getReviewsByMovie(
             @PathVariable Long movieId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sort) {
+            @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Review> reviews = reviewService.getReviewsByMovie(movieId, pageable);
-
-        return ResponseEntity.ok(reviews.getContent());
+        return ResponseEntity.ok(reviewService.getReviewsByMovie(movieId, pageable).getContent());
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Review>> getReviewsByUser(
+    public ResponseEntity<List<ReviewResponseDTO>> getReviewsByUser(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id") String sort) {
+            @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Review> reviews = reviewService.getReviewsByUser(userId, pageable);
-
-        return ResponseEntity.ok(reviews.getContent());
+        return ResponseEntity.ok(reviewService.getReviewsByUser(userId, pageable).getContent());
     }
-    
 }

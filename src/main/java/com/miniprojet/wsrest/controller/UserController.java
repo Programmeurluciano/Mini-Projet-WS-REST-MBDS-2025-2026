@@ -1,7 +1,10 @@
 package com.miniprojet.wsrest.controller;
 
-import com.miniprojet.wsrest.model.User;
+import com.miniprojet.wsrest.dto.UserRequestDTO;
+import com.miniprojet.wsrest.dto.UserResponseDTO;
 import com.miniprojet.wsrest.service.UserService;
+
+import jakarta.validation.Valid;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,41 +28,33 @@ public class UserController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size,
-        @RequestParam(defaultValue = "id") String sort
-    ) {
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
 
-        Pageable pageable = PageRequest.of(page,size);
-        Page<User> users = userService.getAllUsers(pageable);
-
+        Pageable pageable = PageRequest.of(page, size);
+        Page<UserResponseDTO> users = userService.getAllUsers(pageable);
         return ResponseEntity.ok(users.getContent());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
-
+    public ResponseEntity<UserResponseDTO> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
-                .map(user -> ResponseEntity.ok(user))
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-    
+
     @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-
-        User createdUser = userService.createUser(user);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
+    public ResponseEntity<UserResponseDTO> createUser(
+            @Valid @RequestBody UserRequestDTO dto) {
+        UserResponseDTO created = userService.createUser(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-
         userService.deleteUser(id);
-
         return ResponseEntity.noContent().build();
     }
-    
 }
